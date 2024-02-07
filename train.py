@@ -37,7 +37,7 @@ if __name__ == "__main__":
     regression_model_ada_write.fit(X_train_enc, y_train_WritingScore)
     y_pred_ada_write = regression_model_ada_write.predict(X_test_enc)
 
-    X_test.to_csv('X_test.csv', index=False)
+    X_test_enc.to_csv('X_test.csv', index=False)
 
     np.savetxt('preds_math.csv', y_pred_ada_math, delimiter=',', header='prediction', comments='')
     np.savetxt('preds_read.csv', y_pred_ada_read, delimiter=',', header='prediction', comments='')

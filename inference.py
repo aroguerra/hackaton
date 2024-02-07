@@ -43,7 +43,11 @@ def perform_preprocess(df):
 
     df['activities'] = df['activities'].map({'yes': 1, 'no': 0})
 
+    df['IsFirstChild'] = df['IsFirstChild'].map({'yes': 1, 'no': 0})
+
     df['TransportMeans'] = df['TransportMeans'].map({'school_bus': 1, 'private': 0})
+
+
 
     parent_status_mapping = {
         'widowed': 1,
@@ -55,6 +59,7 @@ def perform_preprocess(df):
     df['ParentMaritalStatus_encoded'] = df['ParentMaritalStatus'].map(parent_status_mapping)
 
     df = df.drop(columns=['WklyStudyHours', 'PracticeSport', 'ParentEduc', 'LunchType', 'TestPrep', 'ParentMaritalStatus'])
+
     return df
 
 
@@ -82,24 +87,22 @@ def perform_inference(model, X_test_path, saved_predictions_path):
 @app.route('/predict_grades', methods=['GET'])
 def predict_grade():
     response = {
-        'IsFirstChild': float(request.args.get('IsFirstChild')),
-        'activities': float(request.args.get('activities')),
+        'IsFirstChild': request.args.get('IsFirstChild'),
+        'activities': request.args.get('activities'),
         'freetime': float(request.args.get('freetime')),
         'NrSiblings': float(request.args.get('NrSiblings')),
-        'PracticeSport': float(request.args.get('PracticeSport')),
-        'WklyStudyHours': float(request.args.get('WklyStudyHours')),
-        'ParentEduc': float(request.args.get('ParentEduc')),
-        'TestPrep': float(request.args.get('TestPrep')),
-        'LunchType': float(request.args.get('LunchType')),
-        'TransportMeans': float(request.args.get('TransportMeans')),
-        'ParentMaritalStatus': float(request.args.get('ParentMaritalStatus')),
+        'PracticeSport': request.args.get('PracticeSport'),
+        'WklyStudyHours': request.args.get('WklyStudyHours'),
+        'ParentEduc': request.args.get('ParentEduc'),
+        'TestPrep': request.args.get('TestPrep'),
+        'LunchType': request.args.get('LunchType'),
+        'TransportMeans': request.args.get('TransportMeans'),
+        'ParentMaritalStatus': request.args.get('ParentMaritalStatus'),
     }
 
     # mock_response = {
-    #     'internet': 'yes',
     #     'IsFirstChild': 1,
     #     'activities': 'yes',
-    #     'schoolsup': 'no',
     #     'freetime': 3,
     #     'NrSiblings': 2,
     #     'PracticeSport': 'regularly',
@@ -110,7 +113,8 @@ def predict_grade():
     #     'TransportMeans': 'private',
     #     'ParentMaritalStatus': 'married',
     # }
-    # print(response)
+    print(response)
+
     # # Creating a DataFrame from the response dictionary
     df2 = pd.DataFrame([response])
     # print(df2)
@@ -134,14 +138,15 @@ def predict_grade():
     prepro_data = perform_preprocess(df2)
     prepro_data_list = prepro_data.values.tolist()
 
-    # print(df2.value_counts())
-    # print(df2)
-    # print(prepro_data_list)
-
     prediction_math = model_math.predict(prepro_data_list)[0]
     prediction_reading = model_reading.predict(prepro_data_list)[0]
     prediction_writing = model_writing.predict(prepro_data_list)[0]
     # return
+
+    # print(model_math.predict([[1.0, 0.0, 3.0, 7.0, 1.0, 2.0, 1.0, 6.0, 0.0, 1.0, 0.0]])[0])
+    # print(model_reading.predict([[1.0, 0.0, 5.0, 7.0, 1.0, 2.0, 1.0, 6.0, 0.0, 1.0, 4.0]])[0])
+    # print(model_writing.predict([[0.0, 0.0, 4.0, 1.0, 1.0, 2.0, 1.0, 2.0, 0.0, 1.0, 0.0]])[0])
+    #print(prediction_math, prediction_reading, prediction_writing)
     return [prediction_math, prediction_reading, prediction_writing]
 
 
@@ -165,12 +170,17 @@ if __name__ == "__main__":
     saved_predictions_path = 'preds_read.csv'
     saved_predictions_path = 'preds_write.csv'
 
-    perform_inference(model_math, X_test_path, saved_predictions_path)
-    perform_inference(model_reading, X_test_path, saved_predictions_path)
-    perform_inference(model_writing, X_test_path, saved_predictions_path)
+    # perform_inference(model_math, X_test_path, saved_predictions_path)
+    # perform_inference(model_reading, X_test_path, saved_predictions_path)
+    # perform_inference(model_writing, X_test_path, saved_predictions_path)
 
 
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    #app.run(host='0.0.0.0', port=5001, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)
+
 
 # testing example
 # http://localhost:5001/predict_churn?is_male=1&num_inters=0&late_on_payment=1&age=1&years_in_contract=3
+# http://localhost:5001/predict_grades?IsFirstChild=1&activities=yes&freetime=3&NrSiblings=2&PracticeSport=regularly&WklyStudyHours=5%20-%2010&ParentEduc=bachelor's%20degree&TestPrep=completed&LunchType=standard&TransportMeans=private&ParentMaritalStatus=married
+# http://localhost:5001/predict_grades?IsFirstChild=1&activities=yes&freetime=3&NrSiblings=2&PracticeSport=regularly&WklyStudyHours=5%20-%2010&ParentEduc=bachelor's%20degree&TestPrep=completed&LunchType=standard&TransportMeans=private&ParentMaritalStatus=married
+# http://localhost:5001/predict_grades?IsFirstChild=yes&activities=no&freetime=3&NrSiblings=7&PracticeSport=never&WklyStudyHours=5%20-%2010&ParentEduc=bachelor's%20degree&TestPrep=completed&LunchType=standard&TransportMeans=private&ParentMaritalStatus=widowed
